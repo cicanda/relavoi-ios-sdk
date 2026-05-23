@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  swift-build:
+    # macos-latest gives us Swift 5.9+ + Xcode 15+. swift build on this host can
+    # type-check the iOS-only code paths thanks to the `#if canImport(...)` guards.
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: swift build
+        run: swift build -v
+
+      - name: swift test
+        run: swift test -v
+
+  ios-simulator:
+    # Heavier job: runs the test target against an iPhone simulator so the
+    # UIKit / CallKit / ActivityKit code paths get exercised for real.
+    runs-on: macos-latest
+    needs: swift-build
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: List available simulators
+        run: xcrun simctl list devicetypes | head -20
+
+      - name: xcodebuild test
+        run: |
+          xcodebuild test \
+            -scheme RelavoiSDK \
+            -destination 'platform=iOS Simulator,OS=latest,name=iPhone 15' \
+            -enableCodeCoverage YES \
+            CODE_SIGNING_ALLOWED=NO
