@@ -32,6 +32,10 @@ final class APIClient {
         try await send(method: "DELETE", path: path, body: Optional<Empty>.none)
     }
 
+    func delete<T: Decodable, B: Encodable>(_ path: String, body: B) async throws -> T {
+        try await send(method: "DELETE", path: path, body: body)
+    }
+
     func patch<T: Decodable, B: Encodable>(_ path: String, body: B) async throws -> T {
         try await send(method: "PATCH", path: path, body: body)
     }
@@ -134,9 +138,28 @@ final class APIClient {
         return comps?.url ?? base
     }
 
+    /// The backend serializes dates with fractional seconds (e.g.
+    /// "2026-07-13T14:45:49.740Z"). `.iso8601` rejects the fractional part, so
+    /// use a strategy that accepts dates with OR without fractional seconds.
+    static let dateDecodingStrategy: JSONDecoder.DateDecodingStrategy = {
+        let withFraction = ISO8601DateFormatter()
+        withFraction.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let plain = ISO8601DateFormatter()
+        plain.formatOptions = [.withInternetDateTime]
+        return .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let s = try container.decode(String.self)
+            if let d = withFraction.date(from: s) ?? plain.date(from: s) { return d }
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Unrecognized date format: \(s)"
+            )
+        }
+    }()
+
     static let decoder: JSONDecoder = {
         let d = JSONDecoder()
-        d.dateDecodingStrategy = .iso8601
+        d.dateDecodingStrategy = APIClient.dateDecodingStrategy
         d.keyDecodingStrategy = .useDefaultKeys
         return d
     }()

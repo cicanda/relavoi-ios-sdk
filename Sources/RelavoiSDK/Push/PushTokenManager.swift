@@ -50,7 +50,9 @@ public final class PushTokenManager {
     /// Deactivate a token (e.g. on logout).
     public func deactivateToken(deviceToken: Data) async throws {
         let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
-        let _: EmptyResponse = try await api.delete("/devices/token?token=\(hex)")
+        // Backend reads the token from the DELETE request body: { "token": "..." }.
+        struct Body: Encodable { let token: String }
+        let _: EmptyResponse = try await api.delete("/devices/token", body: Body(token: hex))
         dedupeQueue.sync {
             registered = registered.filter { !$0.hasSuffix(":" + hex) }
         }

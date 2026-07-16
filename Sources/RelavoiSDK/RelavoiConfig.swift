@@ -39,8 +39,10 @@ public struct RelavoiConfig {
         case "http": comps.scheme = "ws"
         default: break
         }
-        let trimmed = (comps.path as NSString).standardizingPath
-        comps.path = trimmed.hasSuffix("/") ? "\(trimmed)ws" : "\(trimmed)/ws"
+        // The backend serves the WebSocket at the host root (`/ws`), NOT under the
+        // `/v1` API path. Ignore the base path and target `/ws` directly.
+        comps.path = "/ws"
+        comps.query = nil
         return comps.url ?? baseURL
     }
 }

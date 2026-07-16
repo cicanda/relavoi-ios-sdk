@@ -77,8 +77,9 @@ final class SessionManagerImpl: SessionManager {
 
     func verify(userPhone: String) async throws -> VerificationResult {
         try PhoneUtils.requireValidE164(userPhone, fieldName: "userPhone")
-        let hash = PhoneUtils.hashClientSide(userPhone)
-        return try await api.get("/sessions/verify?user_phone=\(hash)")
+        // Send the RAW E.164 number under `userPhone`; the backend hashes it
+        // server-side with a per-tenant salt. A client-side hash could never match.
+        return try await api.get("/sessions/verify?userPhone=\(PhoneUtils.queryEncode(userPhone))")
     }
 
     @MainActor

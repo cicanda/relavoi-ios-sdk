@@ -17,7 +17,7 @@ public enum RelavoiEvent: Equatable {
 
 /// A minimal `Any`-equivalent for Codable. Swift's `Codable` can't round-trip `[String: Any]`,
 /// so this small enum bridges JSON payloads cleanly.
-public enum JSONValue: Decodable, Equatable {
+public enum JSONValue: Codable, Equatable {
     case string(String)
     case int(Int)
     case double(Double)
@@ -49,6 +49,19 @@ public enum JSONValue: Decodable, Equatable {
             )
         }
     }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        switch self {
+        case .string(let s): try container.encode(s)
+        case .int(let i): try container.encode(i)
+        case .double(let d): try container.encode(d)
+        case .bool(let b): try container.encode(b)
+        case .null: try container.encodeNil()
+        case .array(let a): try container.encode(a)
+        case .object(let o): try container.encode(o)
+        }
+    }
 }
 
 // MARK: - Discriminated decoder
@@ -56,61 +69,64 @@ public enum JSONValue: Decodable, Equatable {
 internal struct RelavoiEventDecoder {
 
     /// Decode a raw text frame into a ``RelavoiEvent``.
+    ///
+    /// Backend frames are shaped `{ "type": "...", "payload": { ... }, "id": "..." }`
+    /// — the event fields live under `payload`, and the timestamp field is
+    /// `timestamp` (an ISO-8601 string with fractional seconds).
     static func decode(_ data: Data) throws -> RelavoiEvent {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        decoder.dateDecodingStrategy = APIClient.dateDecodingStrategy
 
-        // Step 1: read the "type" discriminator.
-        struct TypeOnly: Decodable { let type: String }
-        let typeOnly = try decoder.decode(TypeOnly.self, from: data)
+        let frame = try decoder.decode(Frame.self, from: data)
+        let p = frame.payload ?? EventPayload(
+            sessionId: nil, proxyNumber: nil, callerNumber: nil,
+            durationSeconds: nil, timestamp: nil, ts: nil
+        )
+        let ts = p.timestamp ?? p.ts ?? Date(timeIntervalSince1970: 0)
 
-        switch typeOnly.type {
+        switch frame.type {
         case "session.created":
-            let p = try decoder.decode(SessionCreatedPayload.self, from: data)
-            return .sessionCreated(sessionId: p.sessionId, proxyNumber: p.proxyNumber, ts: p.ts)
+            guard let sid = p.sessionId else { break }
+            return .sessionCreated(sessionId: sid, proxyNumber: p.proxyNumber ?? "", ts: ts)
         case "session.activated":
-            let p = try decoder.decode(SessionTimestampedPayload.self, from: data)
-            return .sessionActivated(sessionId: p.sessionId, ts: p.ts)
+            guard let sid = p.sessionId else { break }
+            return .sessionActivated(sessionId: sid, ts: ts)
         case "session.expired":
-            let p = try decoder.decode(SessionTimestampedPayload.self, from: data)
-            return .sessionExpired(sessionId: p.sessionId, ts: p.ts)
+            guard let sid = p.sessionId else { break }
+            return .sessionExpired(sessionId: sid, ts: ts)
         case "call.incoming":
-            let p = try decoder.decode(CallIncomingPayload.self, from: data)
-            return .callIncoming(sessionId: p.sessionId, callerNumber: p.callerNumber, ts: p.ts)
+            guard let sid = p.sessionId else { break }
+            // Backend carries the proxy number; fall back if a callerNumber is present.
+            return .callIncoming(sessionId: sid, callerNumber: p.callerNumber ?? p.proxyNumber ?? "", ts: ts)
         case "call.answered":
-            let p = try decoder.decode(SessionTimestampedPayload.self, from: data)
-            return .callAnswered(sessionId: p.sessionId, ts: p.ts)
+            guard let sid = p.sessionId else { break }
+            return .callAnswered(sessionId: sid, ts: ts)
         case "call.ended":
-            let p = try decoder.decode(CallEndedPayload.self, from: data)
-            return .callEnded(sessionId: p.sessionId, durationSeconds: p.durationSeconds, ts: p.ts)
-        case "sms.received":
-            let p = try decoder.decode(SessionTimestampedPayload.self, from: data)
-            return .smsReceived(sessionId: p.sessionId, ts: p.ts)
+            guard let sid = p.sessionId else { break }
+            return .callEnded(sessionId: sid, durationSeconds: p.durationSeconds ?? 0, ts: ts)
+        case "sms.received", "sms.sent":
+            guard let sid = p.sessionId else { break }
+            return .smsReceived(sessionId: sid, ts: ts)
         default:
-            let payload = (try? decoder.decode(JSONValue.self, from: data)) ?? .null
-            return .unknown(type: typeOnly.type, payload: payload)
+            break
         }
+        let raw = (try? decoder.decode(JSONValue.self, from: data)) ?? .null
+        return .unknown(type: frame.type, payload: raw)
     }
 
-    // MARK: - Internal payload shapes
+    // MARK: - Internal frame + payload shapes
 
-    private struct SessionTimestampedPayload: Decodable {
-        let sessionId: String
-        let ts: Date
+    private struct Frame: Decodable {
+        let type: String
+        let payload: EventPayload?
     }
-    private struct SessionCreatedPayload: Decodable {
-        let sessionId: String
-        let proxyNumber: String
-        let ts: Date
-    }
-    private struct CallIncomingPayload: Decodable {
-        let sessionId: String
-        let callerNumber: String
-        let ts: Date
-    }
-    private struct CallEndedPayload: Decodable {
-        let sessionId: String
-        let durationSeconds: Int
-        let ts: Date
+
+    private struct EventPayload: Decodable {
+        let sessionId: String?
+        let proxyNumber: String?
+        let callerNumber: String?
+        let durationSeconds: Int?
+        let timestamp: Date?
+        let ts: Date?
     }
 }

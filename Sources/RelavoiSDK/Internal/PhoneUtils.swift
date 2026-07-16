@@ -34,6 +34,15 @@ enum PhoneUtils {
         return "+****\(last4)"
     }
 
+    /// Percent-encode a value for use in a URL query string. Unlike
+    /// `.urlQueryAllowed`, this also encodes `+` (→ `%2B`), which query parsers
+    /// otherwise decode as a space — corrupting E.164 numbers.
+    static func queryEncode(_ value: String) -> String {
+        var allowed = CharacterSet.urlQueryAllowed
+        allowed.remove(charactersIn: "+&=?#")
+        return value.addingPercentEncoding(withAllowedCharacters: allowed) ?? value
+    }
+
     /// Stable hex SHA-256 of the input. Uses CommonCrypto via `@_silgen_name` interop so we don't
     /// need to import the CommonCrypto module (which is awkward in SwiftPM).
     static func hashClientSide(_ phone: String) -> String {

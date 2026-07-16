@@ -1,6 +1,7 @@
 #if canImport(ActivityKit) && canImport(SwiftUI)
 import ActivityKit
 import SwiftUI
+import WidgetKit
 
 /// Dynamic Island views for the Relavoi active-call Live Activity.
 ///

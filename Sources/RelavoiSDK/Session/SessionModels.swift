@@ -8,15 +8,20 @@ public struct Session: Codable, Identifiable, Equatable {
     public let proxyNumber: String
     public let state: SessionState
     public let directionMode: DirectionMode
-    public let metadata: [String: String]?
-    public let gracePeriodMin: Int
-    public let maxDurationMin: Int
+    // The server allows arbitrary JSON metadata values (nested objects, numbers,
+    // arrays), so this is [String: JSONValue] rather than [String: String].
+    public let metadata: [String: JSONValue]?
+    public let gracePeriodMinutes: Int
+    public let maxDurationMinutes: Int
     public let recordingEnabled: Bool
     public let consentPrompt: ConsentPrompt
     public let expiresAt: Date
     public let createdAt: Date
     public let activatedAt: Date?
+    public let endedAt: Date?
+    public let expiredAt: Date?
     public let callCount: Int?
+    public let lastCallAt: Date?
 
     public init(
         id: String,
@@ -24,15 +29,18 @@ public struct Session: Codable, Identifiable, Equatable {
         proxyNumber: String,
         state: SessionState,
         directionMode: DirectionMode,
-        metadata: [String: String]?,
-        gracePeriodMin: Int,
-        maxDurationMin: Int,
+        metadata: [String: JSONValue]?,
+        gracePeriodMinutes: Int,
+        maxDurationMinutes: Int,
         recordingEnabled: Bool,
         consentPrompt: ConsentPrompt,
         expiresAt: Date,
         createdAt: Date,
         activatedAt: Date?,
-        callCount: Int?
+        endedAt: Date? = nil,
+        expiredAt: Date? = nil,
+        callCount: Int?,
+        lastCallAt: Date? = nil
     ) {
         self.id = id
         self.tenantId = tenantId
@@ -40,14 +48,17 @@ public struct Session: Codable, Identifiable, Equatable {
         self.state = state
         self.directionMode = directionMode
         self.metadata = metadata
-        self.gracePeriodMin = gracePeriodMin
-        self.maxDurationMin = maxDurationMin
+        self.gracePeriodMinutes = gracePeriodMinutes
+        self.maxDurationMinutes = maxDurationMinutes
         self.recordingEnabled = recordingEnabled
         self.consentPrompt = consentPrompt
         self.expiresAt = expiresAt
         self.createdAt = createdAt
         self.activatedAt = activatedAt
+        self.endedAt = endedAt
+        self.expiredAt = expiredAt
         self.callCount = callCount
+        self.lastCallAt = lastCallAt
     }
 }
 

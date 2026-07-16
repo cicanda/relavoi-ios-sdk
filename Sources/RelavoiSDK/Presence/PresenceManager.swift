@@ -47,9 +47,13 @@ public final class PresenceManager {
         struct Body: Encodable {
             let userPhone: String
             let status: String
+            let platform: String
         }
         do {
-            let _: EmptyResponse = try await api.post("/devices/presence", body: Body(userPhone: phone, status: status))
+            let _: EmptyResponse = try await api.post(
+                "/devices/presence",
+                body: Body(userPhone: phone, status: status, platform: "ios")
+            )
         } catch {
             Logger.warn("presence update failed: \(error.localizedDescription)")
         }
