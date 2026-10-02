@@ -94,6 +94,10 @@ public struct PaginationInfo: Decodable {
 
 // MARK: - Internal request bodies
 
+struct SwapTargetRequest: Encodable {
+    let customerPhone: String
+}
+
 struct CreateSessionRequest: Encodable {
     let agentPhone: String
     let customerPhone: String

@@ -55,6 +55,16 @@ final class SessionManagerImpl: SessionManager {
         return session
     }
 
+    func swapTarget(_ id: String, customerPhone: String) async throws -> Session {
+        let session: Session = try await api.patch(
+            "/sessions/\(id)/target",
+            body: SwapTargetRequest(customerPhone: customerPhone)
+        )
+        // The cached copy still names the old target.
+        store(session)
+        return session
+    }
+
     func end(_ id: String) async throws -> Session {
         let session: Session = try await api.post("/sessions/\(id)/end")
         remove(id)

@@ -28,6 +28,19 @@ public protocol SessionManager {
     /// Fetch a session by id. Uses an in-process cache when available.
     func get(_ id: String) async throws -> Session
 
+    /// Swap the customer (party B) on an active session, keeping the proxy number.
+    ///
+    /// Use this for sequential calls rather than one session per recipient: ten
+    /// sessions means ten numbers and ten cooldowns, which exhausts a small pool
+    /// partway through a round. The agent keeps dialling the same proxy and each
+    /// call connects to whoever the current target is.
+    ///
+    /// The previous customer can no longer reach the proxy afterwards. Swapping
+    /// to the current target is a no-op. Throws if `customerPhone` is not E.164,
+    /// is the agent's own number, or already participates in another live
+    /// session on the same proxy.
+    func swapTarget(_ id: String, customerPhone: String) async throws -> Session
+
     /// End a session. Returns the updated server state (typically `.gracePeriod`).
     func end(_ id: String) async throws -> Session
 
