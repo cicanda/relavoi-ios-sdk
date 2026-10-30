@@ -149,9 +149,9 @@ numbers in different countries as `RelavoiError.crossBorderNotSupported`.
 
 ## Related Repositories
 
-- [relavoi-backend](https://github.com/cicanda/relavoi-backend) — API server (this SDK is a client of)
-- [relavoi-android-sdk](https://github.com/cicanda/relavoi-android-sdk) — Android SDK (matching feature set)
-- [relavoi-docs](https://github.com/cicanda/relavoi-docs) — Documentation site
-- [relavoi-dashboard](https://github.com/cicanda/relavoi-dashboard) — Tenant web dashboard
-- [relavoi-admin](https://github.com/cicanda/relavoi-admin) — Operator console
-- [relavoi-infra](https://github.com/cicanda/relavoi-infra) — Terraform infrastructure
+- [relavoi-backend](https://github.com/cicanda/relavoi-backend): API server (this SDK is a client of)
+- [relavoi-android-sdk](https://github.com/cicanda/relavoi-android-sdk): Android SDK (matching feature set)
+- [relavoi-docs](https://github.com/cicanda/relavoi-docs): Documentation site
+- [relavoi-dashboard](https://github.com/cicanda/relavoi-dashboard): Tenant web dashboard
+- [relavoi-admin](https://github.com/cicanda/relavoi-admin): Operator console
+- [relavoi-infra](https://github.com/cicanda/relavoi-infra): Terraform infrastructure
