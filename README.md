@@ -131,7 +131,21 @@ xcodebuild test \
 
 ## Privacy
 
-Phone numbers are **never logged in plaintext**. `PhoneUtils.mask()` and `PhoneUtils.hashClientSide()` (CommonCrypto `CC_SHA256` via `@_silgen_name`) are the only safe ways to surface a phone in logs or the SDK's own state.
+Phone numbers are **never logged, in any form**. Not in full, and not masked to
+the last four digits: no log line, error message or crash report carries any
+part of a number. `PhoneUtils.mask()` existed for that purpose and was removed
+in 0.2.0, because `+****5678` is still part of a number. Log lines use the
+session id instead, which is the key that actually correlates them.
+
+`PhoneUtils.hashClientSide()` (CommonCrypto `CC_SHA256` via `@_silgen_name`)
+remains, for the SDK's own internal keying such as push-token deduplication. It
+is not for logs.
+
+Validation at the SDK boundary is deliberately light: non-empty, digits, with an
+optional leading plus. The server owns the real rule and reads it from its
+countries table, so it can change without a new SDK release. A number the
+platform does not support arrives as `RelavoiError.numberNotSupported`, and two
+numbers in different countries as `RelavoiError.crossBorderNotSupported`.
 
 ## Related Repositories
 

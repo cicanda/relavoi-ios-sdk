@@ -23,9 +23,11 @@ public final class PushTokenManager {
         deviceToken: Data,
         appBundleId: String? = nil
     ) async throws {
-        try PhoneUtils.requireNumberShaped(userPhone, fieldName: "userPhone")
+        let canonical = try PhoneUtils.requireNumberShaped(userPhone, fieldName: "userPhone")
         let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
-        let key = PhoneUtils.hashClientSide(userPhone) + ":" + hex
+        // Keyed on the canonical form: the same number written two ways must
+        // not look like two users and re-register the same token twice.
+        let key = PhoneUtils.hashClientSide(canonical) + ":" + hex
         if dedupeQueue.sync(execute: { registered.contains(key) }) {
             Logger.debug("push token already registered (dedupe hit)")
             return
@@ -38,7 +40,7 @@ public final class PushTokenManager {
             let appBundleId: String?
         }
         let body = Body(
-            userPhone: userPhone,
+            userPhone: canonical,
             token: hex,
             platform: "ios",
             appBundleId: appBundleId

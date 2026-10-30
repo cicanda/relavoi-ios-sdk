@@ -30,8 +30,8 @@ final class SessionManagerImpl: SessionManager {
         let customer = try PhoneUtils.requireNumberShaped(customerPhone, fieldName: "customerPhone")
 
         let body = CreateSessionRequest(
-            agentPhone: agentPhone,
-            customerPhone: customerPhone,
+            agentPhone: agent,
+            customerPhone: customer,
             metadata: metadata,
             gracePeriodMinutes: gracePeriodMinutes,
             directionMode: directionMode.rawValue,
