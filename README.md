@@ -100,7 +100,9 @@ Sources/RelavoiSDK/
 Tests/RelavoiSDKTests/      PhoneUtils, APIClient (URLProtocol mock), AuthManager, SessionManager
 ```
 
-All UIKit / CallKit / ActivityKit imports are wrapped in `#if canImport(...)` so `swift build` on a macOS host can type-check the iOS-only code paths.
+UIKit code is wrapped in `#if canImport(UIKit)`. CallKit and ActivityKit code is wrapped in `#if os(iOS)`, **not** `canImport`: both of those modules import fine on a macOS host, and it is the types inside them (`CXCallObserver`, `Activity`, `ActivityViewContext`) that are `@available(macOS, unavailable)`, so `canImport` guards nothing there.
+
+A macOS host build therefore type-checks and unit-tests the platform-independent code only. Call detection, Live Activities and the dialer hand-off compile out; use a simulator destination to build those. `Package.swift` declares `.macOS(.v12)` purely to give the host build a modern deployment target, not as a claim of macOS support.
 
 ## Build & test
 
@@ -109,12 +111,22 @@ swift build
 swift test
 ```
 
-For iOS-specific code paths use Xcode:
+For the iOS-only code paths use Xcode against a simulator. Device *names* come and
+go with each Xcode release, so resolve one that actually exists rather than
+hardcoding a model:
 
 ```bash
+udid=$(xcrun simctl list devices available | awk '
+  /^-- iOS/ { in_ios = 1; next }
+  /^-- /    { in_ios = 0 }
+  in_ios && /iPhone/ && match($0, /\(([0-9A-Fa-f-]{36})\)/) {
+    print substr($0, RSTART + 1, RLENGTH - 2); exit
+  }')
+
 xcodebuild test \
   -scheme RelavoiSDK \
-  -destination 'platform=iOS Simulator,name=iPhone 17'
+  -destination "platform=iOS Simulator,id=$udid" \
+  CODE_SIGNING_ALLOWED=NO
 ```
 
 ## Privacy

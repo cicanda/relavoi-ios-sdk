@@ -1,4 +1,7 @@
-#if canImport(ActivityKit)
+// ActivityKit is importable on macOS, but Activity, ActivityAttributes and the
+// rest of the Live Activity surface are `@available(macOS, unavailable)`.
+// Live Activities are an iOS feature; gate on the platform, not the module.
+#if os(iOS)
 import ActivityKit
 import Foundation
 

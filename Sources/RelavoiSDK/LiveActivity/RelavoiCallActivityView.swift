@@ -1,4 +1,7 @@
-#if canImport(ActivityKit) && canImport(SwiftUI)
+// ActivityKit and SwiftUI both import on macOS, but ActivityViewContext is
+// `@available(macOS, unavailable)` and these are Dynamic Island / lock screen
+// views that only exist on iOS. Gate on the platform, not the modules.
+#if os(iOS)
 import ActivityKit
 import SwiftUI
 import WidgetKit

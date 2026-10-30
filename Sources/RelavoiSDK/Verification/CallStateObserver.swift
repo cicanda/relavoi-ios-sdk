@@ -1,9 +1,12 @@
 import Foundation
-#if canImport(CallKit)
+// CallKit IS importable on macOS, but CXCallObserver, CXCall and
+// CXCallObserverDelegate are all `@available(macOS, unavailable)`, so
+// `canImport(CallKit)` is true there and guards nothing. Gate on the platform.
+#if os(iOS)
 import CallKit
 #endif
 
-#if canImport(CallKit)
+#if os(iOS)
 
 /// Wraps `CXCallObserver` to track whether the device is currently on a call.
 final class CallStateObserver: NSObject, CXCallObserverDelegate {
@@ -30,7 +33,8 @@ final class CallStateObserver: NSObject, CXCallObserverDelegate {
 
 #else
 
-/// Stub for platforms without CallKit (e.g. swift build on a Linux host).
+/// Stub for platforms where CXCallObserver does not exist (macOS host builds,
+/// Linux). `isCallActive` is therefore always false off iOS.
 final class CallStateObserver: NSObject {
     private(set) var isOnCall: Bool = false
 }

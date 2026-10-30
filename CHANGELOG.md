@@ -1,3 +1,21 @@
+## Unreleased
+
+### `Package.swift` now declares a macOS platform
+
+CI could never build or test this package: the manifest declared only
+`.iOS(.v15)`, so a host build fell back to SwiftPM's very old default macOS
+deployment target and rejected async/await, `URLSessionWebSocketTask` and
+`URLSession.data(for:delegate:)`.
+
+`.macOS(.v12)` is now declared alongside the iOS floor. **This is not macOS
+support.** Call detection, Live Activities and the dialer hand-off are iOS-only
+and compile out off iOS. The iOS floor is unchanged at 15.
+
+The CallKit and ActivityKit code was guarded with `#if canImport(...)`, which
+guarded nothing: both modules import on macOS, and it is the types inside them
+that are `@available(macOS, unavailable)`. Those guards are now `#if os(iOS)`.
+No iOS behaviour changes.
+
 ## 0.2.0
 
 ### Phone numbers: the server decides, not the SDK
