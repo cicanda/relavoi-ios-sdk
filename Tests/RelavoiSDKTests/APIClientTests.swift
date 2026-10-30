@@ -188,9 +188,40 @@ final class APIClientTests: XCTestCase {
             guard case .api(let status, let body) = err else {
                 return XCTFail("Expected .api, got \(err)")
             }
+            // The status code is kept, because it is the actionable part.
             XCTAssertEqual(status, 500)
-            XCTAssertNotNil(body)
-            XCTAssertTrue(body?.contains("boom") == true)
+            // The body is not. Only `type` and `detail` are read out of an
+            // error response now, and this body is neither a problem document
+            // nor carries a `detail`. An error page from something in front of
+            // the API commonly echoes the request URI, and /sessions/verify
+            // carries a subscriber's number in its query string, so echoing a
+            // raw body into an error put a phone number one crash report away
+            // from a third party.
+            XCTAssertNil(body, "raw body must not be surfaced")
+        } catch {
+            XCTFail("Wrong error type: \(error)")
+        }
+    }
+
+    func testGet_readsDetailOutOfAProblemDocumentOn500() async throws {
+        let (api, _) = makeAPIClient()
+
+        MockURLProtocol.enqueue { _ in
+            (200, ["Content-Type": "application/json"], Data(#"{"accessToken":"jwt","expiresIn":900}"#.utf8))
+        }
+        MockURLProtocol.enqueue { _ in
+            (500, [:], Data(#"{"type":"https://api.relavoi.com/errors/internal","status":500,"detail":"Something went wrong."}"#.utf8))
+        }
+
+        do {
+            let _: Pong = try await api.get("/thing")
+            XCTFail("Expected throw")
+        } catch let err as RelavoiError {
+            guard case .api(let status, let body) = err else {
+                return XCTFail("Expected .api, got \(err)")
+            }
+            XCTAssertEqual(status, 500)
+            XCTAssertEqual(body, "Something went wrong.")
         } catch {
             XCTFail("Wrong error type: \(error)")
         }

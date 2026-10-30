@@ -26,8 +26,8 @@ final class SessionManagerImpl: SessionManager {
         recordingEnabled: Bool,
         consentPrompt: ConsentPrompt
     ) async throws -> Session {
-        try PhoneUtils.requireValidE164(agentPhone, fieldName: "agentPhone")
-        try PhoneUtils.requireValidE164(customerPhone, fieldName: "customerPhone")
+        let agent = try PhoneUtils.requireNumberShaped(agentPhone, fieldName: "agentPhone")
+        let customer = try PhoneUtils.requireNumberShaped(customerPhone, fieldName: "customerPhone")
 
         let body = CreateSessionRequest(
             agentPhone: agentPhone,
@@ -39,7 +39,9 @@ final class SessionManagerImpl: SessionManager {
             consentPrompt: consentPrompt.rawValue
         )
 
-        Logger.info("create session for agent=\(PhoneUtils.mask(agentPhone)) customer=\(PhoneUtils.mask(customerPhone))")
+        // No part of either number goes in here. The last four digits are still
+        // part of a number, and this line reaches the unified log.
+        Logger.info("create session")
 
         let session: Session = try await api.post("/sessions", body: body)
         store(session)
@@ -86,10 +88,14 @@ final class SessionManagerImpl: SessionManager {
     }
 
     func verify(userPhone: String) async throws -> VerificationResult {
-        try PhoneUtils.requireValidE164(userPhone, fieldName: "userPhone")
-        // Send the RAW E.164 number under `userPhone`; the backend hashes it
-        // server-side with a per-tenant salt. A client-side hash could never match.
-        return try await api.get("/sessions/verify?userPhone=\(PhoneUtils.queryEncode(userPhone))")
+        let canonical = try PhoneUtils.requireNumberShaped(userPhone, fieldName: "userPhone")
+        // Send the number as the caller gave it, minus separators; the backend
+        // normalises it and hashes it server-side with a per-tenant salt, so a
+        // client-side hash could never match.
+        //
+        // This number is in the query string, which is why APIClient logs the
+        // path without it.
+        return try await api.get("/sessions/verify?userPhone=\(PhoneUtils.queryEncode(canonical))")
     }
 
     @MainActor

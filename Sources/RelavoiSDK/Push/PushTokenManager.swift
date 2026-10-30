@@ -23,7 +23,7 @@ public final class PushTokenManager {
         deviceToken: Data,
         appBundleId: String? = nil
     ) async throws {
-        try PhoneUtils.requireValidE164(userPhone, fieldName: "userPhone")
+        try PhoneUtils.requireNumberShaped(userPhone, fieldName: "userPhone")
         let hex = deviceToken.map { String(format: "%02x", $0) }.joined()
         let key = PhoneUtils.hashClientSide(userPhone) + ":" + hex
         if dedupeQueue.sync(execute: { registered.contains(key) }) {

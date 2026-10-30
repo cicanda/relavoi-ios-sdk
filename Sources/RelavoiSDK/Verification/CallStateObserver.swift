@@ -49,7 +49,7 @@ final class CallVerificationManagerImpl: CallVerificationManager {
     }
 
     func verify(userPhone: String) async throws -> VerificationResult {
-        try PhoneUtils.requireValidE164(userPhone, fieldName: "userPhone")
+        try PhoneUtils.requireNumberShaped(userPhone, fieldName: "userPhone")
         // Raw E.164 under `userPhone`; backend hashes server-side with per-tenant salt.
         return try await api.get("/sessions/verify?userPhone=\(PhoneUtils.queryEncode(userPhone))")
     }

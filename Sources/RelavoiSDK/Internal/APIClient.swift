@@ -70,7 +70,11 @@ final class APIClient {
             req.httpBody = try APIClient.encoder.encode(body)
         }
 
-        Logger.network("\(method) \(path)")
+        // Path only, never the query string. /sessions/verify carries the
+        // subscriber's number as a query parameter, so logging the full path
+        // wrote a plaintext phone number into the unified log for anyone who
+        // turned SDK logging on.
+        Logger.network("\(method) \(APIClient.pathForLog(path))")
 
         let data: Data
         let response: URLResponse
@@ -81,7 +85,7 @@ final class APIClient {
         }
 
         guard let http = response as? HTTPURLResponse else {
-            throw RelavoiError.unexpected("Non-HTTP response on \(path)")
+            throw RelavoiError.unexpected("Non-HTTP response on \(APIClient.pathForLog(path))")
         }
 
         // 401 → invalidate + retry once.
@@ -91,8 +95,7 @@ final class APIClient {
         }
 
         if http.statusCode == 401 {
-            let bodyStr = String(data: data, encoding: .utf8) ?? "unauthorized"
-            throw RelavoiError.unauthorized(detail: bodyStr)
+            throw RelavoiError.unauthorized(detail: APIClient.problem(from: data)?.detail ?? "unauthorized")
         }
 
         if http.statusCode == 429 {
@@ -103,8 +106,7 @@ final class APIClient {
         }
 
         guard (200..<300).contains(http.statusCode) else {
-            let bodyStr = String(data: data, encoding: .utf8)
-            throw RelavoiError.api(statusCode: http.statusCode, body: bodyStr)
+            throw APIClient.error(status: http.statusCode, data: data)
         }
 
         // Empty body but Decodable T == EmptyResponse? Support via the EmptyResponse sentinel.
@@ -170,6 +172,62 @@ final class APIClient {
         e.keyEncodingStrategy = .useDefaultKeys
         return e
     }()
+
+    // MARK: - Error mapping
+
+    /// The two fields of an RFC 7807 problem document that the SDK reads.
+    struct Problem {
+        /// Last path segment of the `type` URL, e.g. `number-not-supported`.
+        let slug: String?
+        let detail: String?
+    }
+
+    /// Parse a problem document, or return nil if the body is not one.
+    ///
+    /// Only `type` and `detail` are read. The raw body is never surfaced in an
+    /// error, which is deliberate rather than tidy: an error message ends up in
+    /// a crash reporter, so what goes into it is limited to the fields whose
+    /// contents we control. An error page from something in front of the API
+    /// commonly echoes the request URI, and /sessions/verify carries a
+    /// subscriber's number in its query string.
+    static func problem(from data: Data) -> Problem? {
+        guard !data.isEmpty,
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return nil }
+        let type = obj["type"] as? String
+        let detail = obj["detail"] as? String
+        let slug = type.flatMap { $0.split(separator: "/").last.map(String.init) }
+        if slug == nil && detail == nil { return nil }
+        return Problem(slug: slug, detail: detail)
+    }
+
+    /// Map a non-2xx response to a typed error.
+    ///
+    /// The slug is matched rather than the whole `type` URL so the error
+    /// identity does not depend on the hostname, which differs by environment.
+    static func error(status: Int, data: Data) -> RelavoiError {
+        let parsed = problem(from: data)
+        let detail = parsed?.detail
+
+        if status == 400 || status == 422 {
+            switch parsed?.slug {
+            case "number-not-supported":
+                return .numberNotSupported(detail: detail ?? "That phone number is not supported.")
+            case "cross-border-not-supported":
+                return .crossBorderNotSupported(
+                    detail: detail ?? "Both numbers in a session must be from the same country."
+                )
+            default:
+                return .validation(detail: detail ?? "validation failed")
+            }
+        }
+        return .api(statusCode: status, body: detail)
+    }
+
+    /// A path with any query string removed, for logs and messages.
+    static func pathForLog(_ path: String) -> String {
+        path.split(separator: "?", maxSplits: 1, omittingEmptySubsequences: false).first.map(String.init) ?? path
+    }
 
     /// Sentinel type used for endpoints that take no body.
     private struct Empty: Encodable {}
