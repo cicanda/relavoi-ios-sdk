@@ -18,7 +18,7 @@ Swift SDK for embedding Relavoi's privacy telephony into iOS apps. Swift Package
 ```swift
 // Package.swift
 dependencies: [
-  .package(url: "https://github.com/cicanda/relavoi-ios-sdk", from: "0.1.0"),
+  .package(url: "https://github.com/cicanda/relavoi-ios-sdk", from: "0.3.0"),
 ]
 
 .target(
@@ -31,13 +31,21 @@ dependencies: [
 
 ## Quick start
 
+### Where the token comes from
+
+Your backend holds the API key and secret and calls `POST /v1/auth/sdk-token`
+for one user; the app asks your backend and hands the result to the SDK. The
+secret never reaches the handset, because anything compiled into a published
+app can be read back out of it, and a live key and secret let anyone create
+sessions billed to you and list every session and call on your workspace.
+
 ```swift
 // AppDelegate / @main App.init
-Relavoi.initialize(
-  apiKey: ProcessInfo.processInfo.environment["RELAVOI_API_KEY"]!,
-  apiSecret: ProcessInfo.processInfo.environment["RELAVOI_API_SECRET"]!,
-  tenantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890"
-)
+Relavoi.initialize(tenantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890") {
+  // Ask YOUR backend, which holds the API secret.
+  let t = try await MyBackend.relavoiToken()
+  return RelavoiToken(accessToken: t.accessToken, expiresIn: t.expiresIn)
+}
 
 // Anywhere — async/await throughout
 let session = try await Relavoi.shared.sessions.create(
@@ -45,7 +53,7 @@ let session = try await Relavoi.shared.sessions.create(
   customerPhone: "+2348087654321",
   metadata: ["orderId": "CHW-9281"],
   gracePeriodMinutes: 15,
-  directionMode: .bidirectional,
+  directionMode: .bidirectional
   recordingEnabled: false,
   consentPrompt: .none
 )

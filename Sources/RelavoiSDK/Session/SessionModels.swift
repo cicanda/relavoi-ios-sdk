@@ -98,12 +98,14 @@ struct SwapTargetRequest: Encodable {
     let customerPhone: String
 }
 
+/// The wire body for `POST /v1/sessions`.
+///
+/// No recording fields: the API refuses `recordingEnabled: true`, so sending
+/// `false` on every request said nothing, and omitting it means the same.
 struct CreateSessionRequest: Encodable {
     let agentPhone: String
     let customerPhone: String
     let metadata: [String: String]?
     let gracePeriodMinutes: Int
     let directionMode: String
-    let recordingEnabled: Bool
-    let consentPrompt: String
 }

@@ -27,18 +27,69 @@ public final class Relavoi {
         return s
     }
 
-    /// Initialize the SDK. Safe to call multiple times — subsequent calls replace the instance.
+    /// Initialize the SDK with a token provider. Use this one.
+    ///
+    /// Your app supplies a closure that asks your own backend for a token; the
+    /// backend holds the API secret and calls `POST /v1/auth/sdk-token`. The
+    /// secret never reaches the handset.
+    ///
+    /// ```swift
+    /// Relavoi.initialize(tenantId: "your-tenant-uuid") {
+    ///     try await MyBackend.relavoiToken()
+    /// }
+    /// ```
+    ///
+    /// Safe to call multiple times; later calls replace the instance.
+    public static func initialize(
+        tenantId: String,
+        config: RelavoiConfig = RelavoiConfig(),
+        tokenProvider: @escaping RelavoiTokenProvider
+    ) {
+        initLock.lock()
+        defer { initLock.unlock() }
+        _shared = Relavoi(
+            source: .provider(tokenProvider),
+            tenantId: tenantId,
+            config: config
+        )
+    }
+
+    /// Initialize with an API key and secret.
+    ///
+    /// - Warning: Do not ship a **live** key and secret in an app you
+    ///   distribute. An app bundle is an archive: a constant compiled into it
+    ///   can be read back out with `unzip` and `strings`, and a live pair lets
+    ///   anyone create sessions billed to you and list every session and call
+    ///   on your workspace.
+    ///
+    ///   Use this with a sandbox key while you are developing, and move to
+    ///   ``initialize(tenantId:config:tokenProvider:)`` before you ship.
+    @available(
+        *,
+        deprecated,
+        message: "Ship a token provider instead: initialize(tenantId:config:tokenProvider:). A secret compiled into an app can be read back out of it."
+    )
     public static func initialize(
         apiKey: String,
         apiSecret: String,
         tenantId: String,
         config: RelavoiConfig = RelavoiConfig()
     ) {
+        // A sandbox key in a shipped app is a nuisance; a live one is a
+        // credential anybody can take. Say so at runtime, because a compiler
+        // warning is easy to silence and this one is worth reading twice.
+        if apiKey.hasPrefix("rk_live_") {
+            Logger.warn(
+                """
+                Relavoi: a LIVE API secret is compiled into this app. It can be                 extracted from the bundle, and it can create sessions billed to                 you and read every session on your workspace. Move to                 Relavoi.initialize(tenantId:config:tokenProvider:).
+                """
+            )
+        }
+
         initLock.lock()
         defer { initLock.unlock() }
         _shared = Relavoi(
-            apiKey: apiKey,
-            apiSecret: apiSecret,
+            source: .credentials(apiKey: apiKey, apiSecret: apiSecret),
             tenantId: tenantId,
             config: config
         )
@@ -74,14 +125,13 @@ public final class Relavoi {
 
     // MARK: - Init
 
-    private init(apiKey: String, apiSecret: String, tenantId: String, config: RelavoiConfig) {
+    private init(source: AuthManager.Source, tenantId: String, config: RelavoiConfig) {
         self.config = config
         self.tenantId = tenantId
 
         let tokenStore = TokenStore(tenantId: tenantId)
         let auth = AuthManager(
-            apiKey: apiKey,
-            apiSecret: apiSecret,
+            source: source,
             tenantId: tenantId,
             baseURL: config.baseURL,
             tokenStore: tokenStore

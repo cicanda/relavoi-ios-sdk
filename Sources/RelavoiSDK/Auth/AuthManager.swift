@@ -7,10 +7,19 @@ import Foundation
 ///   the SDK. Tests can intercept `URLSession.shared` via `URLProtocol.registerClass(...)`.
 actor AuthManager {
 
+    /// Where tokens come from.
+    ///
+    /// `.provider` is the one to use in a shipped app: the secret stays on
+    /// your backend. `.credentials` is the original form, kept working for
+    /// local development and for integrations that have not moved yet.
+    enum Source {
+        case credentials(apiKey: String, apiSecret: String)
+        case provider(RelavoiTokenProvider)
+    }
+
     // MARK: - Stored
 
-    private let apiKey: String
-    private let apiSecret: String
+    private let source: Source
     private let tenantId: String
     private let baseURL: URL
     private let tokenStore: TokenStore
@@ -24,17 +33,31 @@ actor AuthManager {
     /// In-flight refresh task so concurrent callers don't all hit `/auth/token`.
     private var inFlightRefresh: Task<String, Error>?
 
-    init(apiKey: String, apiSecret: String, tenantId: String, baseURL: URL, tokenStore: TokenStore) {
-        self.apiKey = apiKey
-        self.apiSecret = apiSecret
+    init(source: Source, tenantId: String, baseURL: URL, tokenStore: TokenStore) {
+        self.source = source
         self.tenantId = tenantId
         self.baseURL = baseURL
         self.tokenStore = tokenStore
 
-        // Hydrate from Keychain on first init.
-        if let persisted = tokenStore.load() {
+        // Hydrate from the Keychain, but only for the credentials path.
+        //
+        // A provider token is already short-lived and the provider can always
+        // produce another, so persisting one buys nothing and costs something:
+        // a token that outlives a sign-out in your app would keep working
+        // until it expired.
+        if case .credentials = source, let persisted = tokenStore.load() {
             self.cached = (persisted.0, persisted.1)
         }
+    }
+
+    /// Kept for source compatibility with the deprecated initializer.
+    init(apiKey: String, apiSecret: String, tenantId: String, baseURL: URL, tokenStore: TokenStore) {
+        self.init(
+            source: .credentials(apiKey: apiKey, apiSecret: apiSecret),
+            tenantId: tenantId,
+            baseURL: baseURL,
+            tokenStore: tokenStore
+        )
     }
 
     // MARK: - API
@@ -70,6 +93,22 @@ actor AuthManager {
     // MARK: - Internal
 
     private func performRefresh() async throws -> String {
+        switch source {
+        case .provider(let provide):
+            let token = try await provide()
+            guard !token.accessToken.isEmpty else {
+                throw RelavoiError.unexpected("Token provider returned an empty accessToken")
+            }
+            let expiresAt = Date().addingTimeInterval(TimeInterval(max(token.expiresIn, 0)))
+            cached = (token.accessToken, expiresAt)
+            // Deliberately not persisted. See init.
+            return token.accessToken
+        case .credentials(let apiKey, let apiSecret):
+            return try await performCredentialsRefresh(apiKey: apiKey, apiSecret: apiSecret)
+        }
+    }
+
+    private func performCredentialsRefresh(apiKey: String, apiSecret: String) async throws -> String {
         let url = baseURL.appendingPathComponent("auth/token")
         var req = URLRequest(url: url)
         req.httpMethod = "POST"

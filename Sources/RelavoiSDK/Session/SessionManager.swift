@@ -13,16 +13,18 @@ public protocol SessionManager {
     ///   - metadata: Free-form key/value pairs persisted with the session (e.g. order id).
     ///   - gracePeriodMinutes: How long after `end()` the session stays callable. Default `15`.
     ///   - directionMode: Who can call whom. Default `.bidirectional`.
-    ///   - recordingEnabled: Whether calls are recorded. Default `false`.
-    ///   - consentPrompt: Recording consent flow. Default `.none`.
+    ///
+    /// - Note: `recordingEnabled` and `consentPrompt` were removed in 0.3.0.
+    ///   Recording is not available: the API refuses `recordingEnabled: true`
+    ///   with `feature-not-available`, so the parameters configured nothing.
+    ///   Both fields are still returned on ``Session``, because the API still
+    ///   returns them.
     func create(
         agentPhone: String,
         customerPhone: String,
         metadata: [String: String]?,
         gracePeriodMinutes: Int,
-        directionMode: DirectionMode,
-        recordingEnabled: Bool,
-        consentPrompt: ConsentPrompt
+        directionMode: DirectionMode
     ) async throws -> Session
 
     /// Fetch a session by id. Uses an in-process cache when available.

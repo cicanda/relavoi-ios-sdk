@@ -22,9 +22,7 @@ final class SessionManagerImpl: SessionManager {
         customerPhone: String,
         metadata: [String: String]?,
         gracePeriodMinutes: Int,
-        directionMode: DirectionMode,
-        recordingEnabled: Bool,
-        consentPrompt: ConsentPrompt
+        directionMode: DirectionMode
     ) async throws -> Session {
         let agent = try PhoneUtils.requireNumberShaped(agentPhone, fieldName: "agentPhone")
         let customer = try PhoneUtils.requireNumberShaped(customerPhone, fieldName: "customerPhone")
@@ -34,9 +32,7 @@ final class SessionManagerImpl: SessionManager {
             customerPhone: customer,
             metadata: metadata,
             gracePeriodMinutes: gracePeriodMinutes,
-            directionMode: directionMode.rawValue,
-            recordingEnabled: recordingEnabled,
-            consentPrompt: consentPrompt.rawValue
+            directionMode: directionMode.rawValue
         )
 
         // No part of either number goes in here. The last four digits are still
