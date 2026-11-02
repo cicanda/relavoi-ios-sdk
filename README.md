@@ -18,7 +18,7 @@ Swift SDK for embedding Relavoi's privacy telephony into iOS apps. Swift Package
 ```swift
 // Package.swift
 dependencies: [
-  .package(url: "https://github.com/cicanda/relavoi-ios-sdk", from: "0.3.1"),
+  .package(url: "https://github.com/cicanda/relavoi-ios-sdk", from: "0.3.2"),
 ]
 
 .target(
