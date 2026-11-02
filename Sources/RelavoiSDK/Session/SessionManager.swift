@@ -19,7 +19,10 @@ public protocol SessionManager {
     ///   with `feature-not-available`, so the parameters configured nothing.
     ///   Both fields are still returned on ``Session``, because the API still
     ///   returns them.
-    func create(
+    /// - Note: named `createSession`, not `create`, on purpose. See the
+    ///   extension below: a protocol extension cannot safely provide default
+    ///   arguments for a requirement it shares argument labels with.
+    func createSession(
         agentPhone: String,
         customerPhone: String,
         metadata: [String: String]?,
@@ -47,7 +50,9 @@ public protocol SessionManager {
     func end(_ id: String) async throws -> Session
 
     /// List sessions for the current tenant. Cursor-based via `after`.
-    func list(
+    ///
+    /// - Note: named `listSessions` for the same reason as ``createSession``.
+    func listSessions(
         state: SessionState?,
         limit: Int,
         after: String?
@@ -64,25 +69,37 @@ public protocol SessionManager {
     func initiateCall(sessionId: String) async throws
 }
 
-// Default-parameter convenience extension so callers can omit common fields.
+/// Default-parameter conveniences, so a caller writes `create(agentPhone:customerPhone:)`
+/// and `list()`.
+///
+/// The requirements above are deliberately named `createSession` and
+/// `listSessions` rather than `create` and `list`. In Swift, a protocol
+/// extension method that shares its name and argument labels with a
+/// requirement does not satisfy that requirement: it is a separate overload.
+/// A call inside the extension body then resolves to the extension itself, and
+/// the method calls itself until the stack runs out.
+///
+/// That is not hypothetical. It shipped. In 0.3.0 and 0.3.1 both of these
+/// methods were declared here with the requirements' own labels and forwarded
+/// to themselves, so `create(agentPhone:customerPhone:)` and `list()` crashed
+/// the process instead of making a request, and the sample app in this
+/// repository crashed on its first button. Distinct names make the mistake
+/// impossible to repeat rather than merely absent: there is no overload for
+/// the forwarding call below to resolve to except the requirement.
 public extension SessionManager {
     func create(
         agentPhone: String,
         customerPhone: String,
         metadata: [String: String]? = nil,
         gracePeriodMinutes: Int = 15,
-        directionMode: DirectionMode = .bidirectional,
-        recordingEnabled: Bool = false,
-        consentPrompt: ConsentPrompt = .none
+        directionMode: DirectionMode = .bidirectional
     ) async throws -> Session {
-        try await create(
+        try await createSession(
             agentPhone: agentPhone,
             customerPhone: customerPhone,
             metadata: metadata,
             gracePeriodMinutes: gracePeriodMinutes,
-            directionMode: directionMode,
-            recordingEnabled: recordingEnabled,
-            consentPrompt: consentPrompt
+            directionMode: directionMode
         )
     }
 
@@ -91,6 +108,6 @@ public extension SessionManager {
         limit: Int = 20,
         after: String? = nil
     ) async throws -> SessionListResponse {
-        try await list(state: state, limit: limit, after: after)
+        try await listSessions(state: state, limit: limit, after: after)
     }
 }

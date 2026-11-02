@@ -85,9 +85,7 @@ final class SessionManagerTests: XCTestCase {
             customerPhone: "+2348087654321",
             metadata: ["orderId": "ORD-1"],
             gracePeriodMinutes: 15,
-            directionMode: .bidirectional,
-            recordingEnabled: false,
-            consentPrompt: .none
+            directionMode: .bidirectional
         )
 
         XCTAssertEqual(s.id, "sess-1")
@@ -105,9 +103,7 @@ final class SessionManagerTests: XCTestCase {
                 customerPhone: "+2348087654321",
                 metadata: nil,
                 gracePeriodMinutes: 15,
-                directionMode: .bidirectional,
-                recordingEnabled: false,
-                consentPrompt: .none
+                directionMode: .bidirectional
             )
             XCTFail("Expected throw")
         } catch let err as RelavoiError {
@@ -134,9 +130,7 @@ final class SessionManagerTests: XCTestCase {
                 customerPhone: "+2348087654321",
                 metadata: nil,
                 gracePeriodMinutes: 15,
-                directionMode: .bidirectional,
-                recordingEnabled: false,
-                consentPrompt: .none
+                directionMode: .bidirectional
             )
             XCTFail("Expected throw")
         } catch let err as RelavoiError {
@@ -147,6 +141,72 @@ final class SessionManagerTests: XCTestCase {
         } catch {
             XCTFail("Wrong error: \(error)")
         }
+    }
+
+    /// The shapes a caller actually writes, and the shapes that crashed.
+    ///
+    /// In 0.3.0 and 0.3.1 the convenience overloads in the `SessionManager`
+    /// extension forwarded to themselves, so every one of these calls recursed
+    /// until the stack ran out. The process died with no assertion failure,
+    /// which is why a red suite looked like a hang: this file's first test
+    /// never finished and took the other six with it.
+    ///
+    /// Each case asserts only that the call reaches the implementation and
+    /// comes back. That is the whole point: a recursing call never returns, so
+    /// any assertion at all after the call is the guard.
+    func testConvenienceCallsReachTheImplementation() async throws {
+        let api = makeAPI()
+        let mgr = SessionManagerImpl(api: api)
+
+        // Two arguments: the minimal call, and the one the sample app makes.
+        enqueueTokenRefresh()
+        MockURLProtocol.enqueue { _ in (201, ["Content-Type": "application/json"], Data(self.sessionJSON(id: "min").utf8)) }
+        let minimal = try await mgr.create(
+            agentPhone: "+2348012345678",
+            customerPhone: "+2348087654321"
+        )
+        XCTAssertEqual(minimal.id, "min")
+
+        // Three: the form in the README and in SampleApp/ContentView.swift.
+        MockURLProtocol.enqueue { _ in (201, ["Content-Type": "application/json"], Data(self.sessionJSON(id: "meta").utf8)) }
+        let withMetadata = try await mgr.create(
+            agentPhone: "+2348012345678",
+            customerPhone: "+2348087654321",
+            metadata: ["orderId": "ORD-1"]
+        )
+        XCTAssertEqual(withMetadata.id, "meta")
+
+        // All five, which resolves to the requirement rather than the
+        // convenience and so was the only shape that worked.
+        MockURLProtocol.enqueue { _ in (201, ["Content-Type": "application/json"], Data(self.sessionJSON(id: "full").utf8)) }
+        let full = try await mgr.create(
+            agentPhone: "+2348012345678",
+            customerPhone: "+2348087654321",
+            metadata: nil,
+            gracePeriodMinutes: 30,
+            directionMode: .aToBOnly
+        )
+        XCTAssertEqual(full.id, "full")
+    }
+
+    /// `list()` carried the same defect, from the same cause.
+    func testListWithNoArgumentsReachesTheImplementation() async throws {
+        let api = makeAPI()
+        let mgr = SessionManagerImpl(api: api)
+
+        enqueueTokenRefresh()
+        let listJSON = """
+        {
+          "data": [\(sessionJSON(id: "only"))],
+          "pagination": {"count": 1, "after": null}
+        }
+        """
+        MockURLProtocol.enqueue { _ in
+            (200, ["Content-Type": "application/json"], Data(listJSON.utf8))
+        }
+        let resp = try await mgr.list()
+        XCTAssertEqual(resp.data.count, 1)
+        XCTAssertEqual(resp.data.first?.id, "only")
     }
 
     func testList_returnsPaginatedResponse() async throws {
@@ -184,9 +244,7 @@ final class SessionManagerTests: XCTestCase {
             customerPhone: "+2348087654321",
             metadata: nil,
             gracePeriodMinutes: 15,
-            directionMode: .bidirectional,
-            recordingEnabled: false,
-            consentPrompt: .none
+            directionMode: .bidirectional
         )
 
         // Now call get — should hit cache, NOT trigger a network call.

@@ -47,7 +47,7 @@ Relavoi.initialize(tenantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890") {
   return RelavoiToken(accessToken: t.accessToken, expiresIn: t.expiresIn)
 }
 
-// Anywhere — async/await throughout
+// Anywhere: async/await throughout
 let session = try await Relavoi.shared.sessions.create(
   agentPhone: "+2348012345678",
   customerPhone: "+2348087654321",
@@ -93,7 +93,7 @@ Brand the proxy number in caller ID with a static label like "Chowdeck Courier" 
 
 ```
 Sources/RelavoiSDK/
-  Relavoi.swift             public class — Relavoi.initialize + Relavoi.shared.*
+  Relavoi.swift             public class: Relavoi.initialize + Relavoi.shared.*
   RelavoiConfig.swift       baseURL / webSocketURL / enableLogging
   RelavoiError.swift        LocalizedError-conforming enum
   Auth/                     actor AuthManager (thread-safe token caching), TokenStore (Keychain)

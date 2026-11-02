@@ -17,7 +17,7 @@ final class SessionManagerImpl: SessionManager {
 
     // MARK: - SessionManager
 
-    func create(
+    func createSession(
         agentPhone: String,
         customerPhone: String,
         metadata: [String: String]?,
@@ -69,7 +69,7 @@ final class SessionManagerImpl: SessionManager {
         return session
     }
 
-    func list(
+    func listSessions(
         state: SessionState?,
         limit: Int,
         after: String?

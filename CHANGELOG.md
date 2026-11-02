@@ -1,4 +1,72 @@
-## Unreleased
+## 0.3.2
+
+### `create()` and `list()` called themselves until the process died
+
+Both convenience methods on `SessionManager` were unusable in 0.3.0 and
+0.3.1. **Any app calling `create(agentPhone:customerPhone:)` or `list()`
+crashed**, and the sample app in this repository crashed on its first button.
+
+The cause is a Swift rule that is easy to walk into. A protocol extension
+method that shares its name and argument labels with a protocol requirement
+does not satisfy that requirement: it is a separate overload. Both methods
+were declared in the extension with the requirements' own labels and then
+forwarded to themselves, so each call recursed until the stack ran out.
+
+`create` was worse than ambiguous. It also still accepted `recordingEnabled`
+and `consentPrompt`, which 0.3.0 removed from the API, so the only overload
+that could accept them was the recursive one.
+
+The fix makes the mistake impossible rather than merely absent. The two
+requirements are now named `createSession` and `listSessions`, so the
+forwarding call in the extension has no overload to resolve to except the
+requirement. Callers are unaffected and keep writing `create(...)` and
+`list(...)`, with the same defaults as before.
+
+**If you implement `SessionManager` yourself**, rename your two methods to
+`createSession` and `listSessions`. Nothing else changes. If you obtain the
+manager from `Relavoi.sessions`, as the documentation shows, there is nothing
+to do.
+
+`recordingEnabled` and `consentPrompt` are now a compile error on `create`
+rather than a crash, which is what 0.3.0 intended when it removed them.
+
+### Why no test caught it
+
+The test file for these methods never ran. Its first case recursed, the
+process died with no assertion failure, and the suite reported nothing, so CI
+had been red since 1 November while looking like a hang rather than a failure.
+There are now tests for each call shape a caller actually writes: two
+arguments, three, and all five. They assert only that the call returns, which
+is the whole guard, because a recursing call never does.
+
+## 0.3.1
+
+### Apache License 2.0
+
+This repository is public and is what integrators read, and it shipped without
+a licence. Nobody could use it: no licence means all rights reserved, so a
+company's legal review would have stopped an integration whatever the README
+promised.
+
+The licence is Apache 2.0, the full text is in `LICENSE`, and the README says
+so. Nothing about the code or the API has changed in this release.
+
+## 0.3.0
+
+### Initialize with a token provider, so no secret ships in the app
+
+`initialize()` took the API key and secret, and anything compiled into a
+published app can be read back out of it. It now takes a token provider: your
+app asks your own backend, which holds the secret and calls
+`POST /v1/auth/sdk-token` for one user. The key and secret form still works,
+deprecated, and warns at runtime when the key is a live one.
+
+`create()` no longer takes `recordingEnabled` or `consentPrompt`. The API
+refuses `recordingEnabled: true` with `feature-not-available`, so they
+configured nothing. Both fields are still returned on `Session`.
+
+This release went out with the `create()` and `list()` defect described under
+0.3.2. Use 0.3.2 or later.
 
 ### `Package.swift` now declares a macOS platform
 
@@ -15,18 +83,6 @@ The CallKit and ActivityKit code was guarded with `#if canImport(...)`, which
 guarded nothing: both modules import on macOS, and it is the types inside them
 that are `@available(macOS, unavailable)`. Those guards are now `#if os(iOS)`.
 No iOS behaviour changes.
-
-## 0.3.1
-
-### Apache License 2.0
-
-This repository is public and is what integrators read, and it shipped without
-a licence. Nobody could use it: no licence means all rights reserved, so a
-company's legal review would have stopped an integration whatever the README
-promised.
-
-The licence is Apache 2.0, the full text is in `LICENSE`, and the README says
-so. Nothing about the code or the API has changed in this release.
 
 ## 0.2.0
 
