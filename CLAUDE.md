@@ -27,4 +27,8 @@ pinned three different author identities had already reached this history:
 change only the address. Existing history is not rewritten.
 
 Never add a Claude attribution line, a co-author trailer or a generated-by
-note to a commit message or a pull request description.
+note to a commit message or a pull request description. Never add
+`Co-Authored-By`, `Generated with` or any other Claude or Anthropic
+attribution to a commit or a PR. Named literally so it can be grepped for:
+`git log --all --format=%B | grep -i -e co-authored-by -e anthropic` must stay
+empty, and it is empty as of 2 November 2026 across every ref of every repo.
