@@ -16,6 +16,18 @@ guarded nothing: both modules import on macOS, and it is the types inside them
 that are `@available(macOS, unavailable)`. Those guards are now `#if os(iOS)`.
 No iOS behaviour changes.
 
+## 0.3.1
+
+### Apache License 2.0
+
+This repository is public and is what integrators read, and it shipped without
+a licence. Nobody could use it: no licence means all rights reserved, so a
+company's legal review would have stopped an integration whatever the README
+promised.
+
+The licence is Apache 2.0, the full text is in `LICENSE`, and the README says
+so. Nothing about the code or the API has changed in this release.
+
 ## 0.2.0
 
 ### Phone numbers: the server decides, not the SDK
