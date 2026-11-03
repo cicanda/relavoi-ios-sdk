@@ -104,11 +104,27 @@ jobs:
       - name: The tree agrees with the tag
         run: scripts/check-release-version.sh "${GITHUB_REF_NAME}"
 
-      - name: README samples call create() with parameters it has
-        # Cheap half of a sample check: no toolchain, reads the allowed
-        # parameters out of the protocol so it cannot drift. It catches the
-        # fault that actually happened, in three SDKs' docs and in this
-        # README, and went unnoticed for two releases. Compiling every sample
-        # needs Xcode plus a way to tell a copy-paste sample from a reference
-        # listing; see the report, that is a separate job.
-        run: python3 scripts/check-readme-samples.py
+  doc-samples:
+    # Every ```swift fence in the README is type-checked for the iOS Simulator
+    # against this working tree. A sample an integrator could not compile
+    # fails here.
+    #
+    # This replaced a regex script that only checked create()'s parameter
+    # names. That script existed because compiling the samples needed a way to
+    # tell a copy-paste sample from a reference listing; the fence annotations
+    # are that way, and they are documented in scripts/doc-samples/README.md.
+    #
+    # The docs site's iOS pages hold most of the samples and are not in this
+    # repository. relavoi-docs runs this same script over them on a schedule,
+    # with this SDK checked out at its released tag, because that is the
+    # version a reader of the docs is using.
+    runs-on: macos-latest
+    needs: swift-build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version && xcodebuild -version
+
+      - name: README swift samples compile
+        run: python3 scripts/check-doc-samples.py README.md

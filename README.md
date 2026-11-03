@@ -15,7 +15,7 @@ Swift SDK for embedding Relavoi's privacy telephony into iOS apps. Swift Package
 
 ## Install
 
-```swift
+```swift manifest
 // Package.swift
 dependencies: [
   .package(url: "https://github.com/cicanda/relavoi-ios-sdk", from: "0.3.3"),
@@ -39,7 +39,7 @@ secret never reaches the handset, because anything compiled into a published
 app can be read back out of it, and a live key and secret let anyone create
 sessions billed to you and list every session and call on your workspace.
 
-```swift
+```swift fragment
 // AppDelegate / @main App.init
 Relavoi.initialize(tenantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890") {
   // Ask YOUR backend, which holds the API secret.

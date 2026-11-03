@@ -40,3 +40,18 @@ git log --all --format=%B | grep -icE '^(co-authored-by|generated with)'
 
 It answers 0 as of 2 November 2026, across every ref of every Relavoi repo,
 and no author or committer has ever been Claude or Anthropic.
+
+## README code samples are compiled
+
+CI compiles every ```swift fence in README.md against this working tree, and the
+docs repository runs the same script over the docs site's pages for this
+platform on a schedule, with this SDK checked out at its newest tag.
+
+A fence that is not a complete copy-pasteable sample says so in its info
+string: `fragment`, `reference`, `manifest`, or `no-compile <reason>`.
+Anything unannotated has to compile. The marks, and the prelude of app-side
+symbols the samples assume, are documented in scripts/doc-samples/README.md.
+
+So a public API change here is not finished until the README and the docs
+pages for it compile again. That is the point: 0.3.0 removed two parameters
+from `create` and three SDKs' docs kept passing them for two releases.
