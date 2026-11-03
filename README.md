@@ -54,8 +54,6 @@ let session = try await Relavoi.shared.sessions.create(
   metadata: ["orderId": "CHW-9281"],
   gracePeriodMinutes: 15,
   directionMode: .bidirectional
-  recordingEnabled: false,
-  consentPrompt: .none
 )
 print(session.proxyNumber)
 ```
@@ -69,21 +67,53 @@ iOS does not allow apps to draw over the native dialer (no equivalent to Android
 `LiveActivityManager.start(...)` shows a persistent verified-call banner on the lock screen and in the Dynamic Island. The bundled `RelavoiCallActivityView` and `RelavoiCallCompactView` views are designed to drop straight into your app's `WidgetBundle`:
 
 ```swift
-@main
-struct MyWidgets: WidgetBundle {
-  var body: some Widget {
-    ActivityConfiguration(for: RelavoiCallAttributes.self) { ctx in
-      RelavoiCallActivityView(context: ctx)        // lock screen
-    } dynamicIsland: { ctx in
+import ActivityKit
+import SwiftUI
+import WidgetKit
+import RelavoiSDK
+
+@available(iOS 17.0, *)
+struct RelavoiCallWidget: Widget {
+  var body: some WidgetConfiguration {
+    ActivityConfiguration(for: RelavoiCallAttributes.self) { context in
+      // Lock Screen / banner UI
+      RelavoiCallActivityView(context: context)
+    } dynamicIsland: { context in
       DynamicIsland {
-        // expanded regions
-      } compactLeading:  { RelavoiCallCompactView.compactLeading(ctx)  }
-        compactTrailing: { RelavoiCallCompactView.compactTrailing(ctx) }
-        minimal:         { RelavoiCallCompactView.minimal(ctx)         }
+        DynamicIslandExpandedRegion(.leading) {
+          RelavoiCallCompactView.expandedLeading(context)
+        }
+        DynamicIslandExpandedRegion(.trailing) {
+          RelavoiCallCompactView.expandedTrailing(context)
+        }
+        DynamicIslandExpandedRegion(.center) {
+          RelavoiCallCompactView.expandedCenter(context)
+        }
+      } compactLeading: {
+        RelavoiCallCompactView.compactLeading(context)
+      } compactTrailing: {
+        RelavoiCallCompactView.compactTrailing(context)
+      } minimal: {
+        RelavoiCallCompactView.minimal(context)
+      }
     }
   }
 }
+
+@available(iOS 17.0, *)
+@main
+struct MyWidgets: WidgetBundle {
+  var body: some Widget {
+    RelavoiCallWidget()
+  }
+}
 ```
+
+`ActivityConfiguration` is a `WidgetConfiguration`, not a `Widget`, so it goes
+inside a type of your own that conforms to `Widget`; the bundle lists that
+type. And the expanded regions are not optional: `DynamicIsland` takes a result
+builder, so a body holding only a comment does not compile. See
+[Live Activities](https://docs.relavoi.com/sdks/ios/live-activities).
 
 ### CallKit Call Directory (any iOS version)
 
