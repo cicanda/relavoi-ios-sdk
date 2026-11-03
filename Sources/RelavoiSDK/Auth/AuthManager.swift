@@ -2,9 +2,11 @@ import Foundation
 
 /// Manages the short-lived JWT used for all API calls.
 ///
-/// - Note: AuthManager uses `URLSession.shared` directly for its `/auth/token` call rather than
-///   accepting an injected session. The injectable `URLSession` on ``APIClient`` is for the rest of
-///   the SDK. Tests can intercept `URLSession.shared` via `URLProtocol.registerClass(...)`.
+/// The `/auth/token` call goes through the same `URLSession` as the rest of the SDK, the one
+/// handed to ``APIClient``. It used to use `URLSession.shared` directly, which meant the token
+/// call was the one request in the SDK that ignored how the session was configured: timeouts,
+/// a proxy, additional headers, a URLProtocol registered on that session only. Nothing could
+/// configure it, and a test could reach it only by registering a protocol class globally.
 actor AuthManager {
 
     /// Where tokens come from.
@@ -23,6 +25,8 @@ actor AuthManager {
     private let tenantId: String
     private let baseURL: URL
     private let tokenStore: TokenStore
+    /// The same instance ``APIClient`` holds. See the note above the type.
+    private let session: URLSession
 
     /// In-memory cache. Refreshed when within `refreshLeadTime` of expiry.
     private var cached: (token: String, expiresAt: Date)?
@@ -33,11 +37,18 @@ actor AuthManager {
     /// In-flight refresh task so concurrent callers don't all hit `/auth/token`.
     private var inFlightRefresh: Task<String, Error>?
 
-    init(source: Source, tenantId: String, baseURL: URL, tokenStore: TokenStore) {
+    init(
+        source: Source,
+        tenantId: String,
+        baseURL: URL,
+        tokenStore: TokenStore,
+        session: URLSession = .shared
+    ) {
         self.source = source
         self.tenantId = tenantId
         self.baseURL = baseURL
         self.tokenStore = tokenStore
+        self.session = session
 
         // Hydrate from the Keychain, but only for the credentials path.
         //
@@ -51,12 +62,20 @@ actor AuthManager {
     }
 
     /// Kept for source compatibility with the deprecated initializer.
-    init(apiKey: String, apiSecret: String, tenantId: String, baseURL: URL, tokenStore: TokenStore) {
+    init(
+        apiKey: String,
+        apiSecret: String,
+        tenantId: String,
+        baseURL: URL,
+        tokenStore: TokenStore,
+        session: URLSession = .shared
+    ) {
         self.init(
             source: .credentials(apiKey: apiKey, apiSecret: apiSecret),
             tenantId: tenantId,
             baseURL: baseURL,
-            tokenStore: tokenStore
+            tokenStore: tokenStore,
+            session: session
         )
     }
 
@@ -121,7 +140,7 @@ actor AuthManager {
         let data: Data
         let response: URLResponse
         do {
-            (data, response) = try await URLSession.shared.data(for: req)
+            (data, response) = try await session.data(for: req)
         } catch {
             throw RelavoiError.network(error)
         }

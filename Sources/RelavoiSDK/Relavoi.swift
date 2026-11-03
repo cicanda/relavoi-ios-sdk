@@ -130,15 +130,19 @@ public final class Relavoi {
         self.tenantId = tenantId
 
         let tokenStore = TokenStore(tenantId: tenantId)
+        // One session for the whole SDK, built here and handed to both, so the
+        // token call cannot end up on a different one from everything else.
+        let session = URLSession.shared
         let auth = AuthManager(
             source: source,
             tenantId: tenantId,
             baseURL: config.baseURL,
-            tokenStore: tokenStore
+            tokenStore: tokenStore,
+            session: session
         )
         let api = APIClient(
             baseURL: config.baseURL,
-            session: .shared,
+            session: session,
             authManager: auth,
             enableLogging: config.enableLogging
         )

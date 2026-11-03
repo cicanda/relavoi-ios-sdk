@@ -3,6 +3,8 @@ name: CI
 on:
   push:
     branches: [main, develop]
+    # Release tags run the full suite too, and gate on the version check below.
+    tags: ["v*"]
   pull_request:
     branches: [main]
 
@@ -37,7 +39,16 @@ jobs:
     # real on the product platform.
     runs-on: macos-latest
     needs: swift-build
-    if: github.event_name == 'pull_request'
+    # Pull requests, every push to main, and every release tag.
+    #
+    # It used to be pull requests only, and nothing in these repositories
+    # opens one: work lands by pushing to main. So the job that the comment
+    # above calls "what exercises those" had never run once, and the iOS-only
+    # code had never been compiled by CI at all.
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/main' ||
+      startsWith(github.ref, 'refs/tags/v')
     steps:
       - uses: actions/checkout@v4
 
@@ -76,3 +87,19 @@ jobs:
             -destination "platform=iOS Simulator,id=$udid" \
             -enableCodeCoverage YES \
             CODE_SIGNING_ALLOWED=NO
+
+  release-version:
+    # Only on a tag. Fails the release if the tree disagrees with the tag: the
+    # README install snippet and the newest CHANGELOG section must both name
+    # the version being cut.
+    #
+    # v0.3.2 was tagged with a README still pointing at 0.3.1, the release
+    # whose create() and list() crashed, and the tag had to be force-moved.
+    # Moving a published tag is what this prevents: SwiftPM had already cached
+    # the old revision and refused to resolve the moved one.
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
+      - name: The tree agrees with the tag
+        run: scripts/check-release-version.sh "${GITHUB_REF_NAME}"

@@ -1,3 +1,42 @@
+## 0.3.3
+
+### The token call goes through the SDK's own session
+
+`/auth/token` was the one request in the SDK that used `URLSession.shared`
+directly instead of the session handed to `APIClient`. So anything configured
+on that session applied to every call except the one that authenticates them:
+a host app's timeouts, a proxy, additional headers, or a `URLProtocol`
+registered on that session alone.
+
+`AuthManager` now takes the session and uses it, and `Relavoi` builds one
+session and hands the same instance to both, so the two cannot drift apart
+again. Nothing about the public API changes.
+
+There is a test for it that cannot pass by accident: the mock it uses is never
+registered globally, only in one `URLSessionConfiguration`, so a request
+arriving there proves the injected session carried it. Putting
+`URLSession.shared` back fails it.
+
+### A release cannot disagree with its own tag
+
+`scripts/check-release-version.sh` runs on a tag push and fails the release if
+the README install snippet or the newest CHANGELOG section names a version
+other than the tag being cut.
+
+This is here because 0.3.2 was tagged with a README that still said 0.3.1, the
+release whose `create()` and `list()` crashed, and the tag had to be
+force-moved to fix it. Moving a published tag is exactly what should not
+happen: SwiftPM had already cached the old revision for 0.3.2 and then refused
+to resolve it. The version bump belongs in the release commit, and this proves
+it was.
+
+### The simulator job had never run
+
+`ios-simulator` was gated to pull requests, and work here lands by pushing to
+main, so the job that compiles and exercises the iOS-only code paths had never
+run once. It now runs on pull requests, on every push to main, and on release
+tags.
+
 ## 0.3.2
 
 ### `create()` and `list()` called themselves until the process died
