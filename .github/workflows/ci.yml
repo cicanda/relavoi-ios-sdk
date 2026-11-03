@@ -103,3 +103,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: The tree agrees with the tag
         run: scripts/check-release-version.sh "${GITHUB_REF_NAME}"
+
+      - name: README samples call create() with parameters it has
+        # Cheap half of a sample check: no toolchain, reads the allowed
+        # parameters out of the protocol so it cannot drift. It catches the
+        # fault that actually happened, in three SDKs' docs and in this
+        # README, and went unnoticed for two releases. Compiling every sample
+        # needs Xcode plus a way to tell a copy-paste sample from a reference
+        # listing; see the report, that is a separate job.
+        run: python3 scripts/check-readme-samples.py
