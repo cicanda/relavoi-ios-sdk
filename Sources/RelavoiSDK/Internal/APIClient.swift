@@ -98,6 +98,14 @@ final class APIClient {
             throw RelavoiError.unauthorized(detail: APIClient.problem(from: data)?.detail ?? "unauthorized")
         }
 
+        // Before the 429 branch, because the number quota used to be answered
+        // with a 429 and is now a 409. Matching the slug first means this SDK
+        // reads either one correctly, so it cannot mistake a quota refusal for
+        // a rate limit during a deploy, or if the status is ever moved again.
+        if let slug = APIClient.problem(from: data)?.slug, slug == "number-quota-reached" {
+            throw APIClient.error(status: http.statusCode, data: data)
+        }
+
         if http.statusCode == 429 {
             let raw = http.value(forHTTPHeaderField: "Retry-After")
                 ?? http.value(forHTTPHeaderField: "retry-after")
@@ -208,6 +216,17 @@ final class APIClient {
     static func error(status: Int, data: Data) -> RelavoiError {
         let parsed = problem(from: data)
         let detail = parsed?.detail
+
+        // Matched on the slug alone, before any status check. The quota
+        // refusal was a 429 and is now a 409, and it must not be read as a
+        // rate limit under either: a rate limit says wait, and this one does
+        // not clear by waiting.
+        if parsed?.slug == "number-quota-reached" {
+            return .numberQuotaReached(
+                detail: detail
+                    ?? "This workspace is holding every proxy number its plan allows at once."
+            )
+        }
 
         if status == 400 || status == 422 {
             switch parsed?.slug {

@@ -1,3 +1,41 @@
+## 0.4.0
+
+### `numberQuotaReached`, and why this is a minor and not a patch
+
+The API refuses a session when the workspace is holding every proxy number its
+plan allows at once and each of them is already in a live session with one of
+the two people being connected. That refusal used to arrive as a `429` and be
+surfaced here as `.rateLimited`, which was wrong in the way that matters: a
+caller handling a rate limit waits and retries, and this condition does not
+clear by waiting. It clears when one of the workspace's sessions ends, or when
+a request for more numbers is approved.
+
+So it is now `RelavoiError.numberQuotaReached(detail:)`, and the API answers it
+with a `409`.
+
+**This is a source-breaking change**, which is why it is 0.4.0. `RelavoiError`
+is a public enum, so a `switch` over it with no `default` stops compiling when
+a case is added. The error-handling sample in our own docs is written that way,
+exhaustively, so an app that copied it will not build until it handles the new
+case. Adding one line is the whole migration:
+
+```swift
+case .numberQuotaReached(let detail):
+  showAlert(detail)   // ask for more numbers; do not retry on a timer
+```
+
+Nothing else changes. If your `switch` already has a `default`, there is
+nothing to do at all.
+
+### The slug decides, not the status
+
+`APIClient` matches the problem document's `type` slug before it looks at the
+status code, so `number-quota-reached` maps to the new case whether it arrives
+as a `409` or as the `429` an older deployment sends. An SDK that keyed on the
+status would have called it a rate limit for as long as the two sides were out
+of step, which is exactly the window a release creates. There are tests for
+both statuses.
+
 ## 0.3.3
 
 ### The token call goes through the SDK's own session

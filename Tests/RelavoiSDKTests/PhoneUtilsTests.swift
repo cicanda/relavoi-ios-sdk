@@ -128,6 +128,38 @@ final class APIClientErrorMappingTests: XCTestCase {
         XCTAssertTrue(detail.contains("same country"))
     }
 
+    func testMapsNumberQuotaReachedOn409() {
+        let body = data("""
+        {"type":"https://api.relavoi.com/errors/number-quota-reached","status":409,
+         "detail":"This workspace is holding all 1 of its 1 proxy numbers."}
+        """)
+        guard case .numberQuotaReached(let detail) = APIClient.error(status: 409, data: body) else {
+            return XCTFail("expected .numberQuotaReached")
+        }
+        XCTAssertTrue(detail.contains("proxy numbers"))
+    }
+
+    func testNumberQuotaReachedIsNotARateLimitEvenOn429() {
+        // It was answered with a 429 before the status was changed to 409. An
+        // SDK that keyed on the status would have called it a rate limit, and
+        // a caller handling `rateLimited` retries. The slug decides, so an old
+        // backend and a new one both read correctly.
+        let body = data("""
+        {"type":"https://api.relavoi.com/errors/number-quota-reached","status":429,
+         "detail":"At the limit."}
+        """)
+        guard case .numberQuotaReached = APIClient.error(status: 429, data: body) else {
+            return XCTFail("expected .numberQuotaReached, not .rateLimited")
+        }
+    }
+
+    func testAPlainRateLimitIsStillARateLimit() {
+        let body = data(#"{"type":"https://api.relavoi.com/errors/rate-limit","status":429,"detail":"Slow down."}"#)
+        guard case .api = APIClient.error(status: 429, data: body) else {
+            return XCTFail("expected the generic mapping; the 429 branch is in send()")
+        }
+    }
+
     func testMapsAnyOther422ToValidation() {
         let body = data(#"{"type":"https://api.relavoi.com/errors/validation","status":422,"detail":"agentPhone is not valid."}"#)
         guard case .validation(let detail) = APIClient.error(status: 422, data: body) else {
