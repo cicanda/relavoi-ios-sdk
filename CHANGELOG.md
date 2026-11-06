@@ -168,8 +168,8 @@ No iOS behaviour changes.
 The client-side check was strict E.164 (`^\+[1-9]\d{6,14}$`). It was wrong in
 both directions, and the second direction is the one that hurt:
 
-* It **refused numbers the API accepts.** Someone typing `08031234567`, or
-  pasting `0803 123 4567` out of their contacts, got a client-side error for a
+* It **refused numbers the API accepts.** Someone typing `09000000001`, or
+  pasting `0900 000 0001` out of their contacts, got a client-side error for a
   number the platform would have taken. Only the full `+234...` form worked.
 * It **accepted numbers the API refuses**, such as a UK mobile or a Nigerian
   landline, so the SDK let a call to `create` through and the server refused it.
@@ -221,8 +221,8 @@ Several places leaked digits, and one leaked whole numbers:
 * `PhoneUtils` is internal, but if you reached it: `requireValidE164` is now
   `requireNumberShaped` and returns the canonical form, `validateE164` is now
   `looksLikeNumber`, and `mask` is removed.
-* Numbers are sent with separators stripped. `0803 123 4567` goes out as
-  `08031234567`.
+* Numbers are sent with separators stripped. `0900 000 0001` goes out as
+  `09000000001`.
 
 ## 0.1.0
 

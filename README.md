@@ -49,8 +49,8 @@ Relavoi.initialize(tenantId: "a1b2c3d4-e5f6-7890-abcd-ef1234567890") {
 
 // Anywhere: async/await throughout
 let session = try await Relavoi.shared.sessions.create(
-  agentPhone: "+2348012345678",
-  customerPhone: "+2348087654321",
+  agentPhone: "+2349000000001",
+  customerPhone: "+2349000000002",
   metadata: ["orderId": "CHW-9281"],
   gracePeriodMinutes: 15,
   directionMode: .bidirectional

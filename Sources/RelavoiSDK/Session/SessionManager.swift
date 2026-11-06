@@ -8,7 +8,7 @@ public protocol SessionManager {
     /// Create a new masking session.
     ///
     /// - Parameters:
-    ///   - agentPhone: E.164 (e.g. `+2348012345678`)
+    ///   - agentPhone: E.164 (e.g. `+2349000000001`)
     ///   - customerPhone: E.164
     ///   - metadata: Free-form key/value pairs persisted with the session (e.g. order id).
     ///   - gracePeriodMinutes: How long after `end()` the session stays callable. Default `15`.

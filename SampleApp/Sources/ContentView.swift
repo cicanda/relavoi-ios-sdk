@@ -11,9 +11,9 @@ struct ContentView: View {
 
     @StateObject private var logStore = LogStore()
 
-    @State private var agentPhone = "+2347067379297"
-    @State private var customerPhone = "+2348162662319"
-    @State private var userPhone = "+2347067379297"
+    @State private var agentPhone = "+2349000000001"
+    @State private var customerPhone = "+2349000000002"
+    @State private var userPhone = "+2349000000001"
 
     @State private var currentSessionId: String?
     @State private var didInit = false

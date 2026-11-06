@@ -6,7 +6,7 @@ import Foundation
 /// wrong in both directions. It accepted numbers the API refuses, such as a +44
 /// mobile or a Nigerian landline, so the SDK promised a session it could not
 /// get. More awkwardly it REFUSED the forms the API accepts: someone typing
-/// `08031234567`, or pasting `0803 123 4567` out of Contacts, got a client-side
+/// `09000000001`, or pasting `0900 000 0001` out of Contacts, got a client-side
 /// error for a number the server would have taken.
 ///
 /// So the client-side check is now deliberately light. The server owns the rule

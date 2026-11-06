@@ -1,1 +1,1 @@
-let customer = "+2348087654321"
+let customer = "+2349000000002"
