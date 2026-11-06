@@ -14,6 +14,39 @@ This repository is public and is what integrators read. A published SDK
 version is not retractable once a client has resolved it, so a breaking change
 waits for the next minor rather than going out as a patch.
 
+## After any push, check this repository's CI before pushing anything else
+
+Push, then check the run. Not at the end of the session, not "it'll be fine":
+before the next push to this repository.
+
+```
+gh run list --repo cicanda/relavoi-ios-sdk --branch main --limit 1
+```
+
+And at the end of a round, every repository at once:
+
+```
+relavoi-infra/scripts/ci-status.sh
+```
+
+It prints the latest default-branch result for all nine and exits non-zero if
+any is failing, cancelled or still running. **Its output goes at the top of the
+report. A report does not say "green" without it.**
+
+This is a rule because it has been broken twice in one week, the same way both
+times. relavoi-backend sat red on main for two days behind a lint error a
+narrower local command did not catch, and the report said zero lint errors.
+relavoi-infra's terraform-plan failed for a day while four commits were pushed
+through it, because a plan-only role was missing a read; the run ended in an
+AccessDenied nobody opened, and because Terraform could not refresh the bucket
+the plan also proposed replacing the backups.
+
+Both were one command away. The reason neither got run is that the work felt
+finished, and a push feels like the end of it. It is not: the push is where
+the check starts.
+
+An in-progress run is not a pass. Wait for it.
+
 ## Commit identity
 
 Author and commit as `admin@cicanda.com`.
