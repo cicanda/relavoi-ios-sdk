@@ -42,7 +42,8 @@ somebody else's test data.
 2. Open **API & Keys** in the dashboard and press **Generate sandbox keys**.
    The key and the secret are shown once, when they are generated, so copy
    both before leaving the page. Regenerating invalidates the previous pair.
-3. The workspace id is on that same page, inside the ready-made SDK snippets.
+3. Copy the workspace id from the **Workspace ID** field at the top of that
+   same page. It is not a secret, unlike the two above it.
 
 Sandbox keys talk to the same backend as live ones and need no approval. What
 they will not do is place a real call: a sandbox session is routed and recorded

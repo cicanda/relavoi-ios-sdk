@@ -81,8 +81,8 @@ final class SessionManagerTests: XCTestCase {
         }
 
         let s = try await mgr.create(
-            agentPhone: "+2348012345678",
-            customerPhone: "+2348087654321",
+            agentPhone: "+2349000000001",
+            customerPhone: "+2349000000002",
             metadata: ["orderId": "ORD-1"],
             gracePeriodMinutes: 15,
             directionMode: .bidirectional
@@ -100,7 +100,7 @@ final class SessionManagerTests: XCTestCase {
         do {
             _ = try await mgr.create(
                 agentPhone: "not-a-phone",
-                customerPhone: "+2348087654321",
+                customerPhone: "+2349000000002",
                 metadata: nil,
                 gracePeriodMinutes: 15,
                 directionMode: .bidirectional
@@ -126,8 +126,8 @@ final class SessionManagerTests: XCTestCase {
 
         do {
             _ = try await mgr.create(
-                agentPhone: "+2348012345678",
-                customerPhone: "+2348087654321",
+                agentPhone: "+2349000000001",
+                customerPhone: "+2349000000002",
                 metadata: nil,
                 gracePeriodMinutes: 15,
                 directionMode: .bidirectional
@@ -162,16 +162,16 @@ final class SessionManagerTests: XCTestCase {
         enqueueTokenRefresh()
         MockURLProtocol.enqueue { _ in (201, ["Content-Type": "application/json"], Data(self.sessionJSON(id: "min").utf8)) }
         let minimal = try await mgr.create(
-            agentPhone: "+2348012345678",
-            customerPhone: "+2348087654321"
+            agentPhone: "+2349000000001",
+            customerPhone: "+2349000000002"
         )
         XCTAssertEqual(minimal.id, "min")
 
         // Three: the form in the README and in SampleApp/ContentView.swift.
         MockURLProtocol.enqueue { _ in (201, ["Content-Type": "application/json"], Data(self.sessionJSON(id: "meta").utf8)) }
         let withMetadata = try await mgr.create(
-            agentPhone: "+2348012345678",
-            customerPhone: "+2348087654321",
+            agentPhone: "+2349000000001",
+            customerPhone: "+2349000000002",
             metadata: ["orderId": "ORD-1"]
         )
         XCTAssertEqual(withMetadata.id, "meta")
@@ -180,8 +180,8 @@ final class SessionManagerTests: XCTestCase {
         // convenience and so was the only shape that worked.
         MockURLProtocol.enqueue { _ in (201, ["Content-Type": "application/json"], Data(self.sessionJSON(id: "full").utf8)) }
         let full = try await mgr.create(
-            agentPhone: "+2348012345678",
-            customerPhone: "+2348087654321",
+            agentPhone: "+2349000000001",
+            customerPhone: "+2349000000002",
             metadata: nil,
             gracePeriodMinutes: 30,
             directionMode: .aToBOnly
@@ -240,8 +240,8 @@ final class SessionManagerTests: XCTestCase {
         }
 
         let created = try await mgr.create(
-            agentPhone: "+2348012345678",
-            customerPhone: "+2348087654321",
+            agentPhone: "+2349000000001",
+            customerPhone: "+2349000000002",
             metadata: nil,
             gracePeriodMinutes: 15,
             directionMode: .bidirectional
@@ -299,7 +299,7 @@ final class SessionManagerTests: XCTestCase {
             (200, ["Content-Type": "application/json"], Data(json.utf8))
         }
 
-        let result = try await mgr.verify(userPhone: "+2348012345678")
+        let result = try await mgr.verify(userPhone: "+2349000000001")
         XCTAssertTrue(result.verified)
         XCTAssertEqual(result.context, "Your rider is calling")
         XCTAssertEqual(result.sessionId, "sess-1")
