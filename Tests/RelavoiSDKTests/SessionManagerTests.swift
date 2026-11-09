@@ -50,7 +50,7 @@ final class SessionManagerTests: XCTestCase {
         {
           "id": "\(id)",
           "tenantId": "tenant-x",
-          "proxyNumber": "+2348099999999",
+          "proxyNumber": "+2349000000100",
           "state": "ACTIVE",
           "directionMode": "BIDIRECTIONAL",
           "metadata": {"orderId": "ORD-1", "count": 3, "nested": {"a": 1}},
@@ -90,7 +90,7 @@ final class SessionManagerTests: XCTestCase {
 
         XCTAssertEqual(s.id, "sess-1")
         XCTAssertEqual(s.state, .active)
-        XCTAssertEqual(s.proxyNumber, "+2348099999999")
+        XCTAssertEqual(s.proxyNumber, "+2349000000100")
     }
 
     func testCreate_invalidPhone_throwsValidation() async {
