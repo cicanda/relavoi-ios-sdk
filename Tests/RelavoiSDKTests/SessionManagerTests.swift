@@ -290,7 +290,7 @@ final class SessionManagerTests: XCTestCase {
         let json = """
         {
           "verified": true,
-          "context": "Your Chowdeck rider is calling",
+          "context": "Your rider is calling",
           "sessionId": "sess-1",
           "expiresAt": "2999-01-01T00:00:00Z"
         }
@@ -301,7 +301,7 @@ final class SessionManagerTests: XCTestCase {
 
         let result = try await mgr.verify(userPhone: "+2348012345678")
         XCTAssertTrue(result.verified)
-        XCTAssertEqual(result.context, "Your Chowdeck rider is calling")
+        XCTAssertEqual(result.context, "Your rider is calling")
         XCTAssertEqual(result.sessionId, "sess-1")
     }
 }

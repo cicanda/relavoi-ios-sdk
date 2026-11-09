@@ -20,9 +20,10 @@ Xcode can resolve the local `RelavoiSDK` package for the sources.
    - `Sources/SampleApp.swift`
    - `Sources/ContentView.swift`
    - `Sources/SDKLogView.swift`
-4. In `ContentView.swift`, replace `PASTE_YOUR_API_KEY` / `PASTE_YOUR_API_SECRET`
-   with the test workspace's key/secret (shared out-of-band, not committed to
-   git). The tenant ID and backend URL are already set.
+4. In `ContentView.swift`, replace `PASTE_YOUR_API_KEY`,
+   `PASTE_YOUR_API_SECRET` and `PASTE_YOUR_WORKSPACE_ID` with the test
+   workspace's values. None of the three is committed to git. The backend URL
+   is already set.
 5. (Optional) For Live Activities, add `NSSupportsLiveActivities = YES` to
    `Info.plist`.
 6. Run on a device or simulator (iOS 16+).
@@ -33,9 +34,12 @@ result is appended to the on-screen log.
 
 ## Test credentials
 
-- API Key / Secret: our shared **test workspace**. Shared out-of-band, paste into
-  `ContentView.swift` (not committed to git).
-- Tenant ID: `f656ac1b-3b5d-4af0-8ff1-c4cbc1076144`
+- API Key / Secret: our shared **test workspace**. Shared out of band, paste
+  into `ContentView.swift` (not committed to git).
+- Workspace ID: not written down here. This repository is public, and a
+  workspace id of ours in it is one more thing about our account that anybody
+  can read. It is shared out of band with the key and secret, and the dashboard
+shows it beside the ready-made snippets on its API keys page.
 - Backend: `https://api.relavoi.com/v1`
 
 ## Test numbers (pre-filled in the UI)
