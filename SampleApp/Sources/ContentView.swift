@@ -2,7 +2,7 @@ import SwiftUI
 import RelavoiSDK
 
 struct ContentView: View {
-    // Bolt Nigeria test tenant — live backend. Paste the test key/secret here
+    // Our shared test workspace, on the live backend. Paste the key/secret here
     // before running (shared out-of-band; NOT committed to git). The tenant ID is
     // not a secret. See README.md.
     private let apiKey = "PASTE_YOUR_API_KEY"

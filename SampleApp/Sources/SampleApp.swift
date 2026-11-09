@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Developer test harness for the Relavoi iOS SDK against the live backend
-/// (api.relavoi.com, Bolt Nigeria test tenant). Not a production UI.
+/// (api.relavoi.com, our shared test workspace). Not a production UI.
 ///
 /// To run: create a new iOS App in Xcode, add the local RelavoiSDK package,
 /// and copy these three files (SampleApp.swift, ContentView.swift,

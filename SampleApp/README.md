@@ -2,7 +2,7 @@
 
 Developer test harness for the Relavoi iOS SDK. Not a production UI: a column of
 buttons that each exercise one SDK feature against the **live backend**
-(`https://api.relavoi.com/v1`) using the **Bolt Nigeria** test tenant.
+(`https://api.relavoi.com/v1`) using our shared test workspace.
 
 The sources are plain SwiftUI files meant to be dropped into an Xcode iOS app.
 They use iOS-only APIs, so they build under Xcode for an iOS target, not via a
@@ -21,7 +21,7 @@ Xcode can resolve the local `RelavoiSDK` package for the sources.
    - `Sources/ContentView.swift`
    - `Sources/SDKLogView.swift`
 4. In `ContentView.swift`, replace `PASTE_YOUR_API_KEY` / `PASTE_YOUR_API_SECRET`
-   with the Bolt Nigeria test key/secret (shared out-of-band, not committed to
+   with the test workspace's key/secret (shared out-of-band, not committed to
    git). The tenant ID and backend URL are already set.
 5. (Optional) For Live Activities, add `NSSupportsLiveActivities = YES` to
    `Info.plist`.
@@ -33,9 +33,9 @@ result is appended to the on-screen log.
 
 ## Test credentials
 
-- API Key / Secret: **Bolt Nigeria test tenant**. Shared out-of-band, paste into
+- API Key / Secret: our shared **test workspace**. Shared out-of-band, paste into
   `ContentView.swift` (not committed to git).
-- Tenant ID: `f656ac1b-3b5d-4af0-8ff1-c4cbc1076144` (Bolt Nigeria)
+- Tenant ID: `f656ac1b-3b5d-4af0-8ff1-c4cbc1076144`
 - Backend: `https://api.relavoi.com/v1`
 
 ## Test numbers (pre-filled in the UI)

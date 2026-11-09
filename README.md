@@ -117,7 +117,7 @@ builder, so a body holding only a comment does not compile. See
 
 ### CallKit Call Directory (any iOS version)
 
-Brand the proxy number in caller ID with a static label like "Chowdeck Courier" via `CXCallDirectoryProvider`. Not dynamic per-session but solves the "unknown number" problem at the OS level.
+Brand the proxy number in caller ID with a static label like "Example Logistics Courier" via `CXCallDirectoryProvider`. Not dynamic per-session but solves the "unknown number" problem at the OS level.
 
 ## Architecture
 
