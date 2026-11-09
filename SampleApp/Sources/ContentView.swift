@@ -2,10 +2,10 @@ import SwiftUI
 import RelavoiSDK
 
 struct ContentView: View {
-    // Our shared test workspace, on the live backend. Paste all three in here
-    // before running; none of them is committed to git. The workspace id is not
-    // a secret, but it is ours and this repository is public, so it is not
-    // written down here either. See README.md for where to get it.
+    // Your own workspace, on the live backend. Paste all three in here before
+    // running; none of them is committed to git. Generate sandbox keys on the
+    // API & Keys page of the dashboard, which is also where the workspace id
+    // is. See README.md.
     private let apiKey = "PASTE_YOUR_API_KEY"
     private let apiSecret = "PASTE_YOUR_API_SECRET"
     private let tenantId = "PASTE_YOUR_WORKSPACE_ID"

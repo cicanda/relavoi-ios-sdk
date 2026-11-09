@@ -1,8 +1,8 @@
 # Relavoi iOS Sample App
 
 Developer test harness for the Relavoi iOS SDK. Not a production UI: a column of
-buttons that each exercise one SDK feature against the **live backend**
-(`https://api.relavoi.com/v1`) using our shared test workspace.
+buttons that each exercise one SDK feature against the backend at
+`https://api.relavoi.com/v1`, using a workspace of your own.
 
 The sources are plain SwiftUI files meant to be dropped into an Xcode iOS app.
 They use iOS-only APIs, so they build under Xcode for an iOS target, not via a
@@ -21,9 +21,8 @@ Xcode can resolve the local `RelavoiSDK` package for the sources.
    - `Sources/ContentView.swift`
    - `Sources/SDKLogView.swift`
 4. In `ContentView.swift`, replace `PASTE_YOUR_API_KEY`,
-   `PASTE_YOUR_API_SECRET` and `PASTE_YOUR_WORKSPACE_ID` with the test
-   workspace's values. None of the three is committed to git. The backend URL
-   is already set.
+   `PASTE_YOUR_API_SECRET` and `PASTE_YOUR_WORKSPACE_ID` with your own
+   workspace's values, from the section below. The backend URL is already set.
 5. (Optional) For Live Activities, add `NSSupportsLiveActivities = YES` to
    `Info.plist`.
 6. Run on a device or simulator (iOS 16+).
@@ -32,15 +31,26 @@ Tap the buttons top-to-bottom, starting with **Initialize SDK** (the other
 buttons refuse to run until the SDK is initialized). Every operation and its
 result is appended to the on-screen log.
 
-## Test credentials
+## Credentials: use a workspace of your own
 
-- API Key / Secret: our shared **test workspace**. Shared out of band, paste
-  into `ContentView.swift` (not committed to git).
-- Workspace ID: not written down here. This repository is public, and a
-  workspace id of ours in it is one more thing about our account that anybody
-  can read. It is shared out of band with the key and secret, and the dashboard
-shows it beside the ready-made snippets on its API keys page.
-- Backend: `https://api.relavoi.com/v1`
+This harness does not ship with a workspace, and the keys to ours are not
+shared. A sandbox key is free and takes about a minute, and it means the
+sessions you create while trying the SDK are yours rather than mixed into
+somebody else's test data.
+
+1. Sign up at <https://app.relavoi.com/signup>.
+2. Open **API & Keys** in the dashboard and press **Generate sandbox keys**.
+   The key and the secret are shown once, when they are generated, so copy
+   both before leaving the page. Regenerating invalidates the previous pair.
+3. The workspace id is on that same page, inside the ready-made SDK snippets.
+
+Sandbox keys talk to the same backend as live ones and need no approval. What
+they will not do is place a real call: a sandbox session is routed and recorded
+exactly as a live one but never reaches the carrier, which is what makes it
+safe to run this harness against the numbers below.
+
+All three go into `ContentView.swift`, which is not committed to git. The
+backend is `https://api.relavoi.com/v1` and is already set.
 
 ## Test numbers (pre-filled in the UI)
 
